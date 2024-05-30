@@ -6,5 +6,5 @@ from uuid import uuid4
 
 class BaseModel(DeclarativeBase):
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True, nullable=False, default=uuid4)
+        PG_UUID(as_uuid=True), default=uuid4, nullable=False
     )
