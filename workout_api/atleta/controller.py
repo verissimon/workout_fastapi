@@ -4,7 +4,12 @@ from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import UUID4
 from sqlalchemy.future import select
 
-from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate
+from workout_api.atleta.schemas import (
+    AtletaIn,
+    AtletaOut,
+    AtletaOutParcial,
+    AtletaUpdate,
+)
 from workout_api.atleta.models import AtletaModel
 from workout_api.categorias.models import CategoriaModel
 from workout_api.centro_treinamento.models import CentroTreinamentoModel
@@ -92,7 +97,21 @@ async def get_all(db_session: DatabaseDependency) -> list[AtletaOut]:
 
 
 @router.get(
-    "/{id}",
+    "/parcial",
+    summary="Consultar todos os Atletas, retorna apenas nome, categoria e centro de treinamento",
+    status_code=status.HTTP_200_OK,
+    response_model=list[AtletaOutParcial],
+)
+async def get_all_parcial(db_session: DatabaseDependency) -> list[AtletaOutParcial]:
+    atletas: list[AtletaOutParcial] = (
+        (await db_session.execute(select(AtletaModel))).scalars().all()
+    )
+    atleta_out = [AtletaOutParcial.model_validate(atleta) for atleta in atletas]
+    return atleta_out
+
+
+@router.get(
+    "/id/{id}",
     summary="Consulta um Atleta pelo id",
     status_code=status.HTTP_200_OK,
     response_model=AtletaOut,
@@ -125,13 +144,13 @@ async def get_by_cpf(cpf: str, db_session: DatabaseDependency) -> AtletaOut:
         .scalars()
         .first()
     )
-    
+
     if not atleta:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Atleta não encontrado com cpf: {cpf}",
         )
-        
+
     return atleta
 
 
@@ -147,13 +166,13 @@ async def get_by_nome(nome: str, db_session: DatabaseDependency) -> AtletaOut:
         .scalars()
         .first()
     )
-    
+
     if not atleta:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Atleta não encontrado com nome: {nome}",
         )
-        
+
     return atleta
 
 
