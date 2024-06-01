@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import uuid4
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import UUID4
@@ -88,10 +89,20 @@ async def post(db_session: DatabaseDependency, atleta_in: AtletaIn = Body(...)):
     status_code=status.HTTP_200_OK,
     response_model=list[AtletaOut],
 )
-async def get_all(db_session: DatabaseDependency) -> list[AtletaOut]:
-    atletas: list[AtletaOut] = (
-        (await db_session.execute(select(AtletaModel))).scalars().all()
-    )
+async def get_all(
+    db_session: DatabaseDependency,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> list[AtletaOut]:
+    query = select(AtletaModel)
+
+    if limit is not None:
+        query = query.limit(limit)
+
+    if offset is not None:
+        query = query.offset(offset)
+
+    atletas: list[AtletaOut] = (await db_session.execute(query)).scalars().all()
 
     return [AtletaOut.model_validate(atleta) for atleta in atletas]
 
@@ -102,9 +113,21 @@ async def get_all(db_session: DatabaseDependency) -> list[AtletaOut]:
     status_code=status.HTTP_200_OK,
     response_model=list[AtletaOutParcial],
 )
-async def get_all_parcial(db_session: DatabaseDependency) -> list[AtletaOutParcial]:
+async def get_all_parcial(
+    db_session: DatabaseDependency,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> list[AtletaOutParcial]:
+    query = select(AtletaModel)
+
+    if limit is not None:
+        query = query.limit(limit)
+
+    if offset is not None:
+        query = query.offset(offset)
+        
     atletas: list[AtletaOutParcial] = (
-        (await db_session.execute(select(AtletaModel))).scalars().all()
+        (await db_session.execute(query)).scalars().all()
     )
     atleta_out = [AtletaOutParcial.model_validate(atleta) for atleta in atletas]
     return atleta_out
